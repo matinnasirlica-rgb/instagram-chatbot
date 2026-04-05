@@ -1,5 +1,4 @@
 import os
-import json
 import requests
 from flask import Flask, request, jsonify
 
@@ -9,7 +8,7 @@ app = Flask(__name__)
 # KONFIQURASIYA
 # =============================================
 VERIFY_TOKEN = "mytoken123"
-PAGE_ACCESS_TOKEN = "IGAAN0h2810oRBZAFlBQ0RPa1VwTVE1YUxYVGxJbWJFZA3oxZAldDWURtOEJLRXlJYnAtcEZA4TG9ROHNSZADdfX0RnemxhQ1lVVWpvZAWFBUlBtM0VxUWtubWtDMWlfNThsaEg1UlBRaUZATaFMzOWl3bkduQmFIMmN5dTV5Y0tCdUQtcwZDZD"
+PAGE_ACCESS_TOKEN = "IGAAN0h2810oRBZAGFWcHc4RzJMQW93ajM3dFRmdG9LbGVxdEdyT3VYSkhXMjZArMjdrRExOR291c2hPMXVQcWlOTzFnZA1Jvb1hnVld2blNvVWEwRl9NTnhJS3R1ZATVRZAjJhMjdpbFVGbW5JSmtuRXlsa29wR25JTmRyTXQ2M0xpbwZDZD"
 GEMINI_API_KEY = "AIzaSyASp89UDVrgAC3Yg7UW6HnmRqiz1QdMAJ0"
 GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
 # =============================================
@@ -36,6 +35,7 @@ def get_ai_response(user_id: str, user_message: str) -> str:
     try:
         response = requests.post(GEMINI_URL, json=payload, timeout=30)
         result = response.json()
+        print(f"🔍 Gemini cavabı raw: {result}")
         ai_reply = result["candidates"][0]["content"]["parts"][0]["text"]
 
         conversation_history[user_id].append({
@@ -53,7 +53,7 @@ def get_ai_response(user_id: str, user_message: str) -> str:
 
 
 def send_instagram_message(recipient_id: str, message: str):
-    url = "https://graph.facebook.com/v18.0/me/messages"
+    url = "https://graph.facebook.com/v21.0/me/messages"
     payload = {
         "recipient": {"id": recipient_id},
         "message": {"text": message}
@@ -95,7 +95,7 @@ def handle_message():
                     user_message = messaging["message"]["text"]
                     print(f"📩 Gələn mesaj ({sender_id}): {user_message}")
                     ai_reply = get_ai_response(sender_id, user_message)
-                    print(f"🤖 Gemini cavabı: {ai_reply}")
+                    print(f"🤖 AI cavabı: {ai_reply}")
                     send_instagram_message(sender_id, ai_reply)
     except Exception as e:
         print(f"❌ Xəta: {e}")
