@@ -9,7 +9,7 @@ app = Flask(__name__)
 # KONFIQURASIYA
 # =============================================
 VERIFY_TOKEN = "mytoken123"
-PAGE_ACCESS_TOKEN = "BURAYA_META_TOKEN"    # Meta-dan alacaqsan (az sonra)
+PAGE_ACCESS_TOKEN = "EAAXHxP706j4BRG5zN7EvkwO5OFraETt2W3t1ik2OJy6ubSEvqbHvlxN0CtJR1m7LVUQ068pdwAN377eIWBivgwYneGQlobmU7ekdzuOrpuZArdhgkx2drgyxcOVrONDgqZBvKUObuNG5fTZCZBrOx4zfDogOVEy9UZCOPYZAlLy6aRlbwtZCyUtTQ8fJhkrAGzByAyvky631Tme7LTcM803PiljrjHBZAvsVfJHGbZAGZBOjfTpmzbBSlInHiVH9MvR1cpGEbZCgqJHxNlU09VPdwSJ"
 GEMINI_API_KEY = "AIzaSyASp89UDVrgAC3Yg7UW6HnmRqiz1QdMAJ0"
 # =============================================
 
