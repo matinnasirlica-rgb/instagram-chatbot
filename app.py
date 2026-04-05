@@ -5,8 +5,8 @@ from flask import Flask, request, jsonify
 app = Flask(__name__)
 
 VERIFY_TOKEN = "mytoken123"
-PAGE_ACCESS_TOKEN = "IGAAN0h2810oRBZAFlKMi1NVmRxX1JzVHFzZAU53OVlkNnJ2eU45akdtU21WencxeVNndGtUUmhBd1VuMnZAZAcy12SVROSTlWU2pab29jX0s0LUJETmhDbGdxZAERHeHI3Um1rLXFpTEExVDhWZAVRZAeWNLWVNvTTNQQ2VxOFV5S3ZARcwZDZD"
-GEMINI_API_KEY = "AIzaSyCIn7rve6DMHoaI2APZaV6ZTNSv4iYnwMU"
+PAGE_ACCESS_TOKEN = "IGAAN0h2810oRBZAFlEYUhvNmszYjVNa19DODFISnZAOQVp1Mk5jdUNNLTJRS1BsU3FZAN2MxdlJlSzNlQzM0T2U1ZAFoxdkxqYm5QNFJ1SzB4ZAzJEUVdsSUJxdlBKbmlPcE05REVjX2M4aTd1cUVROEw3TmwzbTM0LUVvSFZA1OGRXRQZDZD"
+GEMINI_API_KEY = "AIzaSyAhETCoj4nZRcu5bthD8Tmiq-MlBcjqKm0"
 GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={GEMINI_API_KEY}"
 
 SYSTEM_PROMPT = "Sen Instagram-da bir chatbot-san. İstifadəçilərlə təbii, mehriban şəkildə söhbət edirsən. Qısa cavablar ver. Azərbaycan dilində cavab ver."
