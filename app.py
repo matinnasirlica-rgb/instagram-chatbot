@@ -9,7 +9,7 @@ app = Flask(__name__)
 # KONFIQURASIYA
 # =============================================
 VERIFY_TOKEN = "mytoken123"
-PAGE_ACCESS_TOKEN = "EAAXHxP706j4BRG5zN7EvkwO5OFraETt2W3t1ik2OJy6ubSEvqbHvlxN0CtJR1m7LVUQ068pdwAN377eIWBivgwYneGQlobmU7ekdzuOrpuZArdhgkx2drgyxcOVrONDgqZBvKUObuNG5fTZCZBrOx4zfDogOVEy9UZCOPYZAlLy6aRlbwtZCyUtTQ8fJhkrAGzByAyvky631Tme7LTcM803PiljrjHBZAvsVfJHGbZAGZBOjfTpmzbBSlInHiVH9MvR1cpGEbZCgqJHxNlU09VPdwSJ"
+PAGE_ACCESS_TOKEN = "IGAAN0h2810oRBZAFlBQ0RPa1VwTVE1YUxYVGxJbWJFZA3oxZAldDWURtOEJLRXlJYnAtcEZA4TG9ROHNSZADdfX0RnemxhQ1lVVWpvZAWFBUlBtM0VxUWtubWtDMWlfNThsaEg1UlBRaUZATaFMzOWl3bkduQmFIMmN5dTV5Y0tCdUQtcwZDZD"
 GEMINI_API_KEY = "AIzaSyASp89UDVrgAC3Yg7UW6HnmRqiz1QdMAJ0"
 # =============================================
 
@@ -53,6 +53,7 @@ def send_instagram_message(recipient_id: str, message: str):
         "Content-Type": "application/json"
     }
     response = requests.post(url, json=payload, headers=headers)
+    print(f"📤 Göndərildi: {response.json()}")
     return response.json()
 
 
@@ -70,6 +71,7 @@ def verify_webhook():
 @app.route("/webhook", methods=["POST"])
 def handle_message():
     data = request.get_json()
+    print(f"📥 Gələn data: {data}")
     try:
         for entry in data.get("entry", []):
             for messaging in entry.get("messaging", []):
