@@ -1,7 +1,7 @@
 import os
+import json
 import requests
 from flask import Flask, request, jsonify
-import google.generativeai as genai
 
 app = Flask(__name__)
 
@@ -11,32 +11,42 @@ app = Flask(__name__)
 VERIFY_TOKEN = "mytoken123"
 PAGE_ACCESS_TOKEN = "IGAAN0h2810oRBZAFlBQ0RPa1VwTVE1YUxYVGxJbWJFZA3oxZAldDWURtOEJLRXlJYnAtcEZA4TG9ROHNSZADdfX0RnemxhQ1lVVWpvZAWFBUlBtM0VxUWtubWtDMWlfNThsaEg1UlBRaUZATaFMzOWl3bkduQmFIMmN5dTV5Y0tCdUQtcwZDZD"
 GEMINI_API_KEY = "AIzaSyASp89UDVrgAC3Yg7UW6HnmRqiz1QdMAJ0"
+GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
 # =============================================
 
-# Gemini quraşdırması
-genai.configure(api_key=GEMINI_API_KEY)
-model = genai.GenerativeModel(
-    model_name="gemini-1.5-flash",
-    system_instruction="""
-Sen Instagram-da bir chatbot-san. İstifadəçilərlə təbii, mehriban və maraqlı şəkildə söhbət edirsən.
-- Qısa və aydın cavablar ver
-- Emoji istifadə et (az-az)
-- Azərbaycan dilində cavab ver
-- Mehriban və kömək edən ol
-"""
-)
+SYSTEM_PROMPT = "Sen Instagram-da bir chatbot-san. İstifadəçilərlə təbii, mehriban və maraqlı şəkildə söhbət edirsən. Qısa və aydın cavablar ver. Az emoji istifadə et. Azərbaycan dilində cavab ver."
 
-# Hər istifadəçinin söhbət tarixçəsini saxla
 conversation_history = {}
 
 
 def get_ai_response(user_id: str, user_message: str) -> str:
     if user_id not in conversation_history:
-        conversation_history[user_id] = model.start_chat(history=[])
-    chat = conversation_history[user_id]
+        conversation_history[user_id] = []
+
+    conversation_history[user_id].append({
+        "role": "user",
+        "parts": [{"text": user_message}]
+    })
+
+    payload = {
+        "system_instruction": {"parts": [{"text": SYSTEM_PROMPT}]},
+        "contents": conversation_history[user_id][-10:]
+    }
+
     try:
-        response = chat.send_message(user_message)
-        return response.text
+        response = requests.post(GEMINI_URL, json=payload, timeout=30)
+        result = response.json()
+        ai_reply = result["candidates"][0]["content"]["parts"][0]["text"]
+
+        conversation_history[user_id].append({
+            "role": "model",
+            "parts": [{"text": ai_reply}]
+        })
+
+        if len(conversation_history[user_id]) > 20:
+            conversation_history[user_id] = conversation_history[user_id][-20:]
+
+        return ai_reply
     except Exception as e:
         print(f"❌ Gemini xətası: {e}")
         return "Bağışla, hal-hazırda cavab verə bilmirəm. Bir az sonra yenidən yaz! 🙏"
