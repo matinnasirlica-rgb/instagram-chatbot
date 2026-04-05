@@ -4,16 +4,12 @@ from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
-# =============================================
-# KONFIQURASIYA
-# =============================================
 VERIFY_TOKEN = "mytoken123"
 PAGE_ACCESS_TOKEN = "IGAAN0h2810oRBZAGFWcHc4RzJMQW93ajM3dFRmdG9LbGVxdEdyT3VYSkhXMjZArMjdrRExOR291c2hPMXVQcWlOTzFnZA1Jvb1hnVld2blNvVWEwRl9NTnhJS3R1ZATVRZAjJhMjdpbFVGbW5JSmtuRXlsa29wR25JTmRyTXQ2M0xpbwZDZD"
 GEMINI_API_KEY = "AIzaSyASp89UDVrgAC3Yg7UW6HnmRqiz1QdMAJ0"
-GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
-# =============================================
+GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={GEMINI_API_KEY}"
 
-SYSTEM_PROMPT = "Sen Instagram-da bir chatbot-san. İstifadəçilərlə təbii, mehriban və maraqlı şəkildə söhbət edirsən. Qısa və aydın cavablar ver. Az emoji istifadə et. Azərbaycan dilində cavab ver."
+SYSTEM_PROMPT = "Sen Instagram-da bir chatbot-san. İstifadəçilərlə təbii, mehriban şəkildə söhbət edirsən. Qısa cavablar ver. Azərbaycan dilində cavab ver."
 
 conversation_history = {}
 
@@ -35,21 +31,23 @@ def get_ai_response(user_id: str, user_message: str) -> str:
     try:
         response = requests.post(GEMINI_URL, json=payload, timeout=30)
         result = response.json()
-        print(f"🔍 Gemini cavabı raw: {result}")
-        ai_reply = result["candidates"][0]["content"]["parts"][0]["text"]
+        print(f"🔍 Gemini raw: {result}")
 
-        conversation_history[user_id].append({
-            "role": "model",
-            "parts": [{"text": ai_reply}]
-        })
-
-        if len(conversation_history[user_id]) > 20:
-            conversation_history[user_id] = conversation_history[user_id][-20:]
-
-        return ai_reply
+        if "candidates" in result:
+            ai_reply = result["candidates"][0]["content"]["parts"][0]["text"]
+            conversation_history[user_id].append({
+                "role": "model",
+                "parts": [{"text": ai_reply}]
+            })
+            if len(conversation_history[user_id]) > 20:
+                conversation_history[user_id] = conversation_history[user_id][-20:]
+            return ai_reply
+        else:
+            print(f"❌ Gemini xətası: {result}")
+            return "Bağışla, cavab verə bilmirəm. Bir az sonra yaz! 🙏"
     except Exception as e:
-        print(f"❌ Gemini xətası: {e}")
-        return "Bağışla, hal-hazırda cavab verə bilmirəm. Bir az sonra yenidən yaz! 🙏"
+        print(f"❌ Xəta: {e}")
+        return "Bağışla, cavab verə bilmirəm. Bir az sonra yaz! 🙏"
 
 
 def send_instagram_message(recipient_id: str, message: str):
@@ -80,7 +78,7 @@ def verify_webhook():
     if mode == "subscribe" and token == VERIFY_TOKEN:
         print("✅ Webhook doğrulandı!")
         return challenge, 200
-    return "Xəta: Token uyğun deyil", 403
+    return "Xəta", 403
 
 
 @app.route("/webhook", methods=["POST"])
@@ -93,9 +91,9 @@ def handle_message():
                 sender_id = messaging["sender"]["id"]
                 if "message" in messaging and "text" in messaging["message"]:
                     user_message = messaging["message"]["text"]
-                    print(f"📩 Gələn mesaj ({sender_id}): {user_message}")
+                    print(f"📩 ({sender_id}): {user_message}")
                     ai_reply = get_ai_response(sender_id, user_message)
-                    print(f"🤖 AI cavabı: {ai_reply}")
+                    print(f"🤖 AI: {ai_reply}")
                     send_instagram_message(sender_id, ai_reply)
     except Exception as e:
         print(f"❌ Xəta: {e}")
