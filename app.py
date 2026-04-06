@@ -65,7 +65,7 @@ def get_ai_response(user_id: str, user_message: str) -> str:
 
 def send_instagram_message(recipient_id: str, message: str):
     token = get_token()
-    url = "https://graph.facebook.com/v21.0/me/messages"
+    url = "https://graph.facebook.com/v21.0/17841442893592153/messages"
     payload = {
         "recipient": {"id": recipient_id},
         "message": {"text": message}
