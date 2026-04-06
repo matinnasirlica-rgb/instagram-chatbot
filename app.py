@@ -6,12 +6,37 @@ app = Flask(__name__)
 
 VERIFY_TOKEN = "mytoken123"
 PAGE_ACCESS_TOKEN = "IGAAN0h2810oRBZAGJKTHlLdU9mZAFdicjRuOU9yU2tvQS1mZAzk2Snp0aW5xN1RmaU5iaWtJVk9heEhKeWZA4dTRyY2NOLXNiQ3VFZAG4wYkx3eW5QSmVqSmluZA3lUR2pJR0dHb0dOVWYwall1ZA290RFB3ak1QdnV5VFJaWlNHYVNkZAwZDZD"
+APP_ID = "1627023788534334"
+APP_SECRET = "2ef1f9302bab0cabbfa489ed08968f9b"
 GROQ_API_KEY = "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"
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 
 SYSTEM_PROMPT = "Sen Instagram-da bir chatbot-san. İstifadəçilərlə təbii, mehriban şəkildə söhbət edirsən. Qısa cavablar ver. Azərbaycan dilində cavab ver."
 
 conversation_history = {}
+current_token = {"value": PAGE_ACCESS_TOKEN}
+
+
+def refresh_token():
+    """Token-i uzunmüddətli et"""
+    try:
+        url = f"https://graph.facebook.com/v21.0/oauth/access_token"
+        params = {
+            "grant_type": "fb_exchange_token",
+            "client_id": APP_ID,
+            "client_secret": APP_SECRET,
+            "fb_exchange_token": current_token["value"]
+        }
+        response = requests.get(url, params=params)
+        result = response.json()
+        print(f"🔄 Token yeniləndi: {result}")
+        if "access_token" in result:
+            current_token["value"] = result["access_token"]
+            print("✅ Yeni token alındı!")
+        else:
+            print(f"❌ Token yenilənmədi: {result}")
+    except Exception as e:
+        print(f"❌ Token yeniləmə xətası: {e}")
 
 
 def get_ai_response(user_id: str, user_message: str) -> str:
@@ -40,8 +65,6 @@ def get_ai_response(user_id: str, user_message: str) -> str:
             timeout=30
         )
         result = response.json()
-        print(f"🔍 Groq raw: {result}")
-
         ai_reply = result["choices"][0]["message"]["content"]
 
         conversation_history[user_id].append({
@@ -66,17 +89,33 @@ def send_instagram_message(recipient_id: str, message: str):
         "message": {"text": message}
     }
     headers = {
-        "Authorization": f"Bearer {PAGE_ACCESS_TOKEN}",
+        "Authorization": f"Bearer {current_token['value']}",
         "Content-Type": "application/json"
     }
     response = requests.post(url, json=payload, headers=headers)
-    print(f"📤 Göndərildi: {response.json()}")
-    return response.json()
+    result = response.json()
+    print(f"📤 Göndərildi: {result}")
+
+    # Token xətası varsa yenilə
+    if "error" in result and result["error"].get("code") == 190:
+        print("🔄 Token bitib, yenilənir...")
+        refresh_token()
+        headers["Authorization"] = f"Bearer {current_token['value']}"
+        response = requests.post(url, json=payload, headers=headers)
+        print(f"📤 Yenidən göndərildi: {response.json()}")
+
+    return result
 
 
 @app.route("/", methods=["GET"])
 def health_check():
     return "OK", 200
+
+
+@app.route("/refresh", methods=["GET"])
+def manual_refresh():
+    refresh_token()
+    return jsonify({"status": "ok", "token_preview": current_token["value"][:20] + "..."}), 200
 
 
 @app.route("/webhook", methods=["GET"])
@@ -110,5 +149,7 @@ def handle_message():
 
 
 if __name__ == "__main__":
+    # Başlanğıcda token yenilə
+    refresh_token()
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port, debug=False)
