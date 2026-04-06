@@ -5,9 +5,9 @@ from flask import Flask, request, jsonify
 app = Flask(__name__)
 
 VERIFY_TOKEN = "mytoken123"
-PAGE_ACCESS_TOKEN = "IGAAN0h2810oRBZAFlEYUhvNmszYjVNa19DODFISnZAOQVp1Mk5jdUNNLTJRS1BsU3FZAN2MxdlJlSzNlQzM0T2U1ZAFoxdkxqYm5QNFJ1SzB4ZAzJEUVdsSUJxdlBKbmlPcE05REVjX2M4aTd1cUVROEw3TmwzbTM0LUVvSFZA1OGRXRQZDZD"
-GEMINI_API_KEY = "AIzaSyAhETCoj4nZRcu5bthD8Tmiq-MlBcjqKm0"
-GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={GEMINI_API_KEY}"
+PAGE_ACCESS_TOKEN = "IGAAN0h2810oRBZAGF4UTExdkhvbzRXdWVWZADd6c1k3b2liSWdXYjFYT0VMNDB6ZAGpNYzNXTWFSckZAxeGZAza0oyeE1wS19UbHdtSFZAYbkV1dVNweGpqQ0xpV3NweTVOZAlpJUDh1eGY1cXpmV0h1TERFeDZAhQVF6ajdDYlN1Q2FUcwZDZD"
+GROQ_API_KEY = "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"
+GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 
 SYSTEM_PROMPT = "Sen Instagram-da bir chatbot-san. İstifadəçilərlə təbii, mehriban şəkildə söhbət edirsən. Qısa cavablar ver. Azərbaycan dilində cavab ver."
 
@@ -16,37 +16,46 @@ conversation_history = {}
 
 def get_ai_response(user_id: str, user_message: str) -> str:
     if user_id not in conversation_history:
-        conversation_history[user_id] = []
+        conversation_history[user_id] = [
+            {"role": "system", "content": SYSTEM_PROMPT}
+        ]
 
     conversation_history[user_id].append({
         "role": "user",
-        "parts": [{"text": user_message}]
+        "content": user_message
     })
 
-    payload = {
-        "system_instruction": {"parts": [{"text": SYSTEM_PROMPT}]},
-        "contents": conversation_history[user_id][-10:]
-    }
-
     try:
-        response = requests.post(GEMINI_URL, json=payload, timeout=30)
+        response = requests.post(
+            GROQ_URL,
+            headers={
+                "Authorization": f"Bearer {GROQ_API_KEY}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "model": "llama-3.3-70b-versatile",
+                "messages": conversation_history[user_id][-10:],
+                "max_tokens": 500
+            },
+            timeout=30
+        )
         result = response.json()
-        print(f"🔍 Gemini raw: {result}")
+        print(f"🔍 Groq raw: {result}")
 
-        if "candidates" in result:
-            ai_reply = result["candidates"][0]["content"]["parts"][0]["text"]
-            conversation_history[user_id].append({
-                "role": "model",
-                "parts": [{"text": ai_reply}]
-            })
-            if len(conversation_history[user_id]) > 20:
-                conversation_history[user_id] = conversation_history[user_id][-20:]
-            return ai_reply
-        else:
-            print(f"❌ Gemini xətası: {result}")
-            return "Bağışla, cavab verə bilmirəm. Bir az sonra yaz! 🙏"
+        ai_reply = result["choices"][0]["message"]["content"]
+
+        conversation_history[user_id].append({
+            "role": "assistant",
+            "content": ai_reply
+        })
+
+        if len(conversation_history[user_id]) > 20:
+            conversation_history[user_id] = [conversation_history[user_id][0]] + conversation_history[user_id][-19:]
+
+        return ai_reply
+
     except Exception as e:
-        print(f"❌ Xəta: {e}")
+        print(f"❌ Groq xətası: {e}")
         return "Bağışla, cavab verə bilmirəm. Bir az sonra yaz! 🙏"
 
 
