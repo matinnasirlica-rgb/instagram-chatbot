@@ -7,6 +7,8 @@ app = Flask(__name__)
 # ========== KONFIQURASIYA ==========
 VERIFY_TOKEN = "mytoken123"
 INSTAGRAM_TOKEN = "IGAAN0h2810oRBZAGJmdUpQOVdtdWdURkFtVTBFckl2QlpuRFBzWE53YXBvaDRqY0pPVnhxOWNQMzJ2QXlJSHNfendQbWNoRHpSY2d5dldOdkxoWkFiOWZA2V0hpQ1BDWTNFWGhHeEdweTFzNUxrcVBkNV9xM2g3Yms5ZAXhIWFRSZAwZDZD"
+PAGE_ACCESS_TOKEN = "EAAXHxP706j4BRGno6HALEXcW6xlZCfS4AwDZBNJtUXoI7gsZAtcqskV4oop0OkvdMZAjKBLPdeiEPTKnjj0q61YhHd6g7Cvf1aZCMmHOZCLVt27gGkdidUi0hR7tJKrUE8uxdqWqUCpBilWs03UNZAMjBQ5ElllPnZB2ZABX9BTKPByr2CqaNbrjw4Wkrs5GdECMY"
+FACEBOOK_PAGE_ID = "113851988486996"
 INSTAGRAM_ACCOUNT_ID = "17841442893592153"
 GROQ_API_KEY = "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"
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
@@ -61,21 +63,32 @@ def get_ai_response(user_id: str, user_message: str) -> str:
 
 
 def send_instagram_message(recipient_id: str, message: str):
-    # Instagram Business Messaging API
-    url = f"https://graph.facebook.com/v21.0/{INSTAGRAM_ACCOUNT_ID}/messages"
     payload = {
         "recipient": {"id": recipient_id},
-        "message": {"text": message},
-        "messaging_type": "RESPONSE"
+        "message": {"text": message}
     }
-    headers = {
-        "Authorization": f"Bearer {INSTAGRAM_TOKEN}",
-        "Content-Type": "application/json"
-    }
-    response = requests.post(url, json=payload, headers=headers)
-    result = response.json()
-    print(f"📤 Göndərildi: {result}")
-    return result
+
+    # 1. IGAAN token + Instagram Account ID
+    url1 = f"https://graph.facebook.com/v21.0/{INSTAGRAM_ACCOUNT_ID}/messages"
+    r1 = requests.post(url1, json=payload, headers={"Authorization": f"Bearer {INSTAGRAM_TOKEN}", "Content-Type": "application/json"})
+    result1 = r1.json()
+    print(f"📤 Cəhd 1 (IGAAN+IG_ID): {result1}")
+    if "error" not in result1:
+        return result1
+
+    # 2. Page token + Instagram Account ID
+    r2 = requests.post(url1, json=payload, headers={"Authorization": f"Bearer {PAGE_ACCESS_TOKEN}", "Content-Type": "application/json"})
+    result2 = r2.json()
+    print(f"📤 Cəhd 2 (PAGE+IG_ID): {result2}")
+    if "error" not in result2:
+        return result2
+
+    # 3. Page token + Facebook Page ID
+    url3 = f"https://graph.facebook.com/v21.0/{FACEBOOK_PAGE_ID}/messages"
+    r3 = requests.post(url3, json=payload, headers={"Authorization": f"Bearer {PAGE_ACCESS_TOKEN}", "Content-Type": "application/json"})
+    result3 = r3.json()
+    print(f"📤 Cəhd 3 (PAGE+FB_ID): {result3}")
+    return result3
 
 
 @app.route("/", methods=["GET"])
